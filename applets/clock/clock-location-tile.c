@@ -54,7 +54,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (ClockLocationTile, clock_location_tile, GTK_TYPE_BIN
 static void clock_location_tile_finalize (GObject *);
 
 static void clock_location_tile_fill (ClockLocationTile *this);
-static void update_weather_icon (ClockLocation *loc, WeatherInfo *info, gpointer data);
+static void update_weather_icon (ClockLocation *loc, GWeatherInfo *info, gpointer data);
 static gboolean weather_tooltip (GtkWidget *widget,
                                  gint x, gint y,
                                  gboolean    keyboard_mode,
@@ -572,7 +572,7 @@ clock_location_tile_refresh (ClockLocationTile *this, gboolean force_refresh)
 }
 
 void
-weather_info_setup_tooltip (WeatherInfo *info, ClockLocation *location, GtkTooltip *tooltip,
+weather_info_setup_tooltip (GWeatherInfo *info, ClockLocation *location, GtkTooltip *tooltip,
                             ClockFormat clock_format)
 {
         GdkPixbuf *pixbuf = NULL;
@@ -587,7 +587,7 @@ weather_info_setup_tooltip (WeatherInfo *info, ClockLocation *location, GtkToolt
         gint icon_scale;
 
         theme = gtk_icon_theme_get_default ();
-        icon_name = weather_info_get_icon_name (info);
+        icon_name = gweather_info_get_icon_name (info);
         icon_scale = gdk_window_get_scale_factor (gdk_get_default_root_window ());
 
         pixbuf = gtk_icon_theme_load_icon_for_scale (theme, icon_name, 48, icon_scale,
@@ -595,18 +595,18 @@ weather_info_setup_tooltip (WeatherInfo *info, ClockLocation *location, GtkToolt
         if (pixbuf)
                 gtk_tooltip_set_icon (tooltip, pixbuf);
 
-        conditions = weather_info_get_conditions (info);
+        conditions = gweather_info_get_conditions (info);
         if (strcmp (conditions, "-") != 0)
                 line1 = g_strdup_printf (_("%s, %s"),
                                          conditions,
-                                         weather_info_get_sky (info));
+                                         gweather_info_get_sky (info));
         else
-                line1 = g_strdup (weather_info_get_sky (info));
+                line1 = g_strdup (gweather_info_get_sky (info));
 
         /* we need to g_strdup() since both functions return the same address
          * of a static buffer */
-        temp = g_strdup (weather_info_get_temp (info));
-        apparent = g_strdup (weather_info_get_apparent (info));
+        temp = g_strdup (gweather_info_get_temp (info));
+        apparent = g_strdup (gweather_info_get_apparent (info));
         if (strcmp (apparent, temp) != 0 &&
             /* FMQ: it's broken to read from another module's translations; add some API to libmateweather. */
             strcmp (apparent, dgettext ("mate-applets-2.0", "Unknown")) != 0)
@@ -617,7 +617,7 @@ weather_info_setup_tooltip (WeatherInfo *info, ClockLocation *location, GtkToolt
         g_free (temp);
         g_free (apparent);
 
-        wind = weather_info_get_wind (info);
+        wind = gweather_info_get_wind (info);
         if (strcmp (wind, dgettext ("mate-applets-2.0", "Unknown")) != 0)
                 line3 = g_strdup_printf ("%s\n", wind);
         else
@@ -626,11 +626,11 @@ weather_info_setup_tooltip (WeatherInfo *info, ClockLocation *location, GtkToolt
         sys_timezone = getenv ("TZ");
         setenv ("TZ", clock_location_get_timezone (location), 1);
         tzset ();
-        if (weather_info_get_value_sunrise (info, &sunrise_time))
+        if (gweather_info_get_value_sunrise (info, &sunrise_time))
                 sunrise_str = convert_time_to_str (sunrise_time, clock_format);
         else
                 sunrise_str = g_strdup ("???");
-        if (weather_info_get_value_sunset (info, &sunset_time))
+        if (gweather_info_get_value_sunset (info, &sunset_time))
                 sunset_str = convert_time_to_str (sunset_time, clock_format);
         else
                 sunset_str = g_strdup ("???");
@@ -664,14 +664,14 @@ weather_tooltip (GtkWidget  *widget,
 {
         ClockLocationTile *tile;
         ClockLocationTilePrivate *priv;
-        WeatherInfo *info;
+        GWeatherInfo *info;
         int clock_format;
 
         tile = CLOCK_LOCATION_TILE (data);
         priv = clock_location_tile_get_instance_private (tile);
         info = clock_location_get_weather_info (priv->location);
 
-        if (!info || !weather_info_is_valid (info))
+        if (!info || !gweather_info_is_valid (info))
                 return FALSE;
 
         g_signal_emit (tile, signals[NEED_CLOCK_FORMAT], 0, &clock_format);
@@ -682,7 +682,7 @@ weather_tooltip (GtkWidget  *widget,
 }
 
 static void
-update_weather_icon (ClockLocation *loc, WeatherInfo *info, gpointer data)
+update_weather_icon (ClockLocation *loc, GWeatherInfo *info, gpointer data)
 {
         ClockLocationTile *tile;
         ClockLocationTilePrivate *priv;
@@ -691,13 +691,13 @@ update_weather_icon (ClockLocation *loc, WeatherInfo *info, gpointer data)
         const gchar *icon_name;
         gint icon_scale;
 
-        if (!info || !weather_info_is_valid (info))
+        if (!info || !gweather_info_is_valid (info))
                 return;
 
         tile = CLOCK_LOCATION_TILE (data);
         priv = clock_location_tile_get_instance_private (tile);
         theme = gtk_icon_theme_get_for_screen (gtk_widget_get_screen (GTK_WIDGET (priv->weather_icon)));
-        icon_name = weather_info_get_icon_name (info);
+        icon_name = gweather_info_get_icon_name (info);
         icon_scale = gtk_widget_get_scale_factor (GTK_WIDGET (priv->weather_icon));
 
         surface = gtk_icon_theme_load_surface (theme, icon_name, 16, icon_scale,

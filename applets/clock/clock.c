@@ -55,9 +55,7 @@
 #include <gdk/gdkx.h>
 #endif
 
-#include <libmateweather/mateweather-prefs.h>
-#include <libmateweather/location-entry.h>
-#include <libmateweather/timezone-menu.h>
+#include <libgweather/gweather.h>
 
 #include "clock.h"
 
@@ -68,6 +66,7 @@
 #include "clock-utils.h"
 #include "set-timezone.h"
 #include "system-timezone.h"
+#include "mateweather-prefs.h"
 
 #define INTERNETSECOND (864)
 #define INTERNETBEAT   (86400)
@@ -124,8 +123,8 @@ struct _ClockData {
         GtkWidget *prefs_location_edit_button;
         GtkWidget *prefs_location_remove_button;
 
-        MateWeatherLocationEntry *location_entry;
-        MateWeatherTimezoneMenu *zone_combo;
+        GtkWidget *location_entry;
+        GtkWidget *zone_combo;
 
         GtkWidget *time_settings_button;
         GtkWidget *calendar;
@@ -151,8 +150,8 @@ struct _ClockData {
         gboolean     show_weather;
         gboolean     show_temperature;
 
-        TempUnit     temperature_unit;
-        SpeedUnit    speed_unit;
+        GWeatherTemperatureUnit temperature_unit;
+        GWeatherSpeedUnit speed_unit;
 
         /* Locations */
         GList *locations;
@@ -1351,7 +1350,7 @@ weather_tooltip (GtkWidget   *widget,
                  ClockData   *cd)
 {
         GList *locations, *l;
-        WeatherInfo *info;
+        GWeatherInfo *info;
 
         locations = cd->locations;
 
@@ -1359,7 +1358,7 @@ weather_tooltip (GtkWidget   *widget,
                 ClockLocation *location = l->data;
                 if (clock_location_is_current (location)) {
                         info = clock_location_get_weather_info (location);
-                        if (!info || !weather_info_is_valid (info))
+                        if (!info || !gweather_info_is_valid (info))
                                 continue;
 
                         weather_info_setup_tooltip (info, location, tooltip, cd->format);
@@ -2020,7 +2019,7 @@ weather_icon_updated_cb (MatePanelApplet *applet,
 
 static void
 location_weather_updated_cb (ClockLocation *location,
-                             WeatherInfo   *info,
+                             GWeatherInfo   *info,
                              gpointer       data)
 {
         ClockData *cd = data;
@@ -2029,13 +2028,13 @@ location_weather_updated_cb (ClockLocation *location,
         cairo_surface_t *surface;
         gint icon_size, icon_scale;
 
-        if (!info || !weather_info_is_valid (info))
+        if (!info || !gweather_info_is_valid (info))
                 return;
 
         if (!clock_location_is_current (location))
                 return;
 
-        cd->weather_icon_name = weather_info_get_icon_name (info);
+        cd->weather_icon_name = gweather_info_get_icon_name (info);
         if (cd->weather_icon_name == NULL)
                 return;
 
@@ -2061,7 +2060,7 @@ location_weather_updated_cb (ClockLocation *location,
                                                      GTK_ICON_LOOKUP_FORCE_SIZE,
                                                                           NULL);
 
-        temp = weather_info_get_temp_summary (info);
+        temp = gweather_info_get_temp_summary (info);
 
         gtk_image_set_from_surface (GTK_IMAGE (cd->panel_weather_icon), surface);
         gtk_label_set_text (GTK_LABEL (cd->panel_temperature_label), temp);
@@ -2074,7 +2073,7 @@ location_set_current_cb (ClockLocation *loc,
                          gpointer       data)
 {
         ClockData *cd = data;
-        WeatherInfo *info;
+        GWeatherInfo *info;
 
         info = clock_location_get_weather_info (loc);
         location_weather_updated_cb (loc, info, cd);
@@ -2149,10 +2148,10 @@ location_start_element (GMarkupParseContext *context,
                         gpointer user_data,
                         GError **error)
 {
-        ClockLocation *loc;
-        LocationParserData *data = user_data;
-        ClockData *cd = data->cd;
-        WeatherPrefs prefs;
+        //ClockLocation *loc;
+        //LocationParserData *data = user_data;
+        //ClockData *cd = data->cd;
+        //WeatherPrefs prefs;
         const gchar *att_name;
 
         gchar *name = NULL;
@@ -2160,13 +2159,13 @@ location_start_element (GMarkupParseContext *context,
         gchar *timezone = NULL;
         gfloat latitude = 0.0;
         gfloat longitude = 0.0;
-        gchar *code = NULL;
-        gboolean current = FALSE;
+        //gchar *code = NULL;
+        //gboolean current = FALSE;
 
         int index = 0;
 
-        prefs.temperature_unit = cd->temperature_unit;
-        prefs.speed_unit = cd->speed_unit;
+        //prefs.temperature_unit = cd->temperature_unit;
+        //prefs.speed_unit = cd->speed_unit;
 
         if (strcmp (element_name, "location") != 0) {
                 return;
@@ -2187,11 +2186,11 @@ location_start_element (GMarkupParseContext *context,
                 } else if (strcmp (att_name, "longitude") == 0) {
                         sscanf (attribute_values[index], "%f", &longitude);
                 } else if (strcmp (att_name, "code") == 0) {
-                        code = (gchar *)attribute_values[index];
+                        ;//code = (gchar *)attribute_values[index];
                 }
                 else if (strcmp (att_name, "current") == 0) {
                         if (strcmp (attribute_values[index], "true") == 0) {
-                                current = TRUE;
+                                ;//current = TRUE;
                         }
                 }
         }
@@ -2203,19 +2202,19 @@ location_start_element (GMarkupParseContext *context,
         }
 
         /* migration from the old configuration, when name == city */
-        if (!city)
-                city = name;
+        //if (!city)
+        //        city = name;
 
-        loc = clock_location_find_and_ref (cd->locations, name, city,
-                                           timezone, latitude, longitude, code);
-        if (!loc)
-                loc = clock_location_new (name, city, timezone,
-                                          latitude, longitude, code, &prefs);
+        //loc = clock_location_find_and_ref (cd->locations, name, city,
+        //                                   timezone, latitude, longitude, code);
+        //if (!loc)
+        //        loc = clock_location_new (name, city, timezone,
+        //                                  latitude, longitude, code, &prefs);
 
-        if (current && clock_location_is_current_timezone (loc))
-                clock_location_make_current (loc, NULL, NULL, NULL);
+        //if (current && clock_location_is_current_timezone (loc))
+        //        clock_location_make_current (loc, NULL, NULL, NULL);
 
-        data->cities = g_list_append (data->cities, loc);
+        //data->cities = g_list_append (data->cities, loc);
 }
 
 static GMarkupParser location_parser = {
@@ -2254,25 +2253,25 @@ cities_changed (GSettings    *settings,
 static void
 update_weather_locations (ClockData *cd)
 {
-        GList *locations, *l;
-        WeatherPrefs prefs = {
-                FORECAST_STATE,
-                FALSE,
-                NULL,
-                TEMP_UNIT_CENTIGRADE,
-                SPEED_UNIT_MS,
-                PRESSURE_UNIT_MB,
-                DISTANCE_UNIT_KM
-        };
+        //GList *locations, *l;
+        //WeatherPrefs prefs = {
+        //        FORECAST_STATE,
+        //        FALSE,
+        //        NULL,
+        //        TEMP_UNIT_CENTIGRADE,
+        //        SPEED_UNIT_MS,
+        //        PRESSURE_UNIT_MB,
+        //        DISTANCE_UNIT_KM
+        //};
 
-        prefs.temperature_unit = cd->temperature_unit;
-        prefs.speed_unit = cd->speed_unit;
+        //prefs.temperature_unit = cd->temperature_unit;
+        //prefs.speed_unit = cd->speed_unit;
 
-        locations = cd->locations;
+        //locations = cd->locations;
 
-        for (l = locations; l; l = l->next) {
-                clock_location_set_weather_prefs (l->data, &prefs);
-        }
+        //for (l = locations; l; l = l->next) {
+        //        clock_location_set_weather_prefs (l->data, &prefs);
+        //}
 }
 
 static void
@@ -2578,6 +2577,7 @@ save_cities_store (ClockData *cd)
         g_list_free_full (locs, g_free);
 }
 
+#if 0
 static void
 run_prefs_edit_save (GtkButton *button, ClockData *cd)
 {
@@ -2593,11 +2593,11 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
         const gchar *timezone, *weather_code;
         gchar *city, *name;
 
-        MateWeatherLocation *gloc;
+        GWeatherLocation *gloc;
         gfloat lat = 0;
         gfloat lon = 0;
 
-        timezone = mateweather_timezone_menu_get_tzid (cd->zone_combo);
+        timezone = gweather_timezone_menu_get_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo));
         if (!timezone) {
                 edit_hide (NULL, cd);
                 return;
@@ -2607,13 +2607,13 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
         weather_code = NULL;
         name = NULL;
 
-        gloc = mateweather_location_entry_get_location (cd->location_entry);
+        gloc = gweather_location_entry_get_location (GWEATHER_LOCATION_ENTRY(cd->location_entry));
         if (gloc) {
-                city = mateweather_location_get_city_name (gloc);
-                weather_code = mateweather_location_get_code (gloc);
+                city = gweather_location_get_city_name (gloc);
+                weather_code = gweather_location_get_code (gloc);
         }
 
-        if (mateweather_location_entry_has_custom_text (cd->location_entry)) {
+        if (gweather_location_entry_has_custom_text (GWEATHER_LOCATION_ENTRY(cd->location_entry))) {
                 name = gtk_editable_get_chars (GTK_EDITABLE (cd->location_entry), 0, -1);
         }
 
@@ -2635,18 +2635,19 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
                 clock_location_set_coords (loc, lat, lon);
                 clock_location_set_weather_code (loc, weather_code);
         } else {
-                WeatherPrefs prefs;
+            ;
+                //WeatherPrefs prefs;
 
-                prefs.temperature_unit = cd->temperature_unit;
-                prefs.speed_unit = cd->speed_unit;
+                //prefs.temperature_unit = cd->temperature_unit;
+                //prefs.speed_unit = cd->speed_unit;
 
-                loc = clock_location_new (name, city, timezone, lat, lon, weather_code, &prefs);
-                /* has the side-effect of setting the current location if
-                 * there's none and this one can be considered as a current one
-                 */
-                clock_location_is_current (loc);
+                //loc = clock_location_new (name, city, timezone, lat, lon, weather_code, &prefs);
+                ///* has the side-effect of setting the current location if
+                // * there's none and this one can be considered as a current one
+                // */
+                //clock_location_is_current (loc);
 
-                cd->locations = g_list_append (cd->locations, loc);
+                //cd->locations = g_list_append (cd->locations, loc);
         }
         g_free (name);
         g_free (city);
@@ -2657,6 +2658,7 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
 
         edit_hide (edit_window, cd);
 }
+#endif
 
 static void
 update_coords_helper (gfloat value, GtkWidget *entry, GtkWidget *combo)
@@ -2699,10 +2701,10 @@ static void
 fill_timezone_combo_from_location (ClockData *cd, ClockLocation *loc)
 {
         if (loc != NULL) {
-                mateweather_timezone_menu_set_tzid (cd->zone_combo,
+                gweather_timezone_menu_set_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo),
                                                  clock_location_get_timezone (loc));
         } else {
-                mateweather_timezone_menu_set_tzid (cd->zone_combo, NULL);
+                gweather_timezone_menu_set_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo), NULL);
         }
 }
 
@@ -2715,7 +2717,7 @@ location_update_ok_sensitivity (ClockData *cd)
 
         ok_button = _clock_get_widget (cd, "edit-location-ok-button");
 
-        timezone = mateweather_timezone_menu_get_tzid (cd->zone_combo);
+        timezone = gweather_timezone_menu_get_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo));
         name = gtk_editable_get_chars (GTK_EDITABLE (cd->location_entry), 0, -1);
 
         if (timezone && name && name[0] != '\0') {
@@ -2730,27 +2732,29 @@ location_update_ok_sensitivity (ClockData *cd)
 static void
 location_changed (GObject *object, GParamSpec *param, ClockData *cd)
 {
-        MateWeatherLocationEntry *entry = MATEWEATHER_LOCATION_ENTRY (object);
-        MateWeatherLocation *gloc;
-        MateWeatherTimezone *zone;
+        GWeatherLocationEntry *entry = GWEATHER_LOCATION_ENTRY (object);
+        GWeatherLocation *gloc;
+        GWeatherTimezone *zone;
         gboolean latlon_valid;
         double latitude = 0.0, longitude = 0.0;
 
-        gloc = mateweather_location_entry_get_location (entry);
+        gloc = gweather_location_entry_get_location (entry);
 
-        latlon_valid = gloc && mateweather_location_has_coords (gloc);
+        latlon_valid = gloc && gweather_location_has_coords (gloc);
         if (latlon_valid)
-                mateweather_location_get_coords (gloc, &latitude, &longitude);
+                gweather_location_get_coords (gloc, &latitude, &longitude);
         update_coords (cd, latlon_valid, latitude, longitude);
 
-        zone = gloc ? mateweather_location_get_timezone (gloc) : NULL;
+        zone = gloc ? gweather_location_get_timezone (gloc) : NULL;
         if (zone)
-                mateweather_timezone_menu_set_tzid (cd->zone_combo, mateweather_timezone_get_tzid (zone));
+                gweather_timezone_menu_set_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo), gweather_timezone_get_tzid (zone));
         else
-                mateweather_timezone_menu_set_tzid (cd->zone_combo, NULL);
+                gweather_timezone_menu_set_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo), NULL);
 
+        if (zone)
+            gweather_timezone_unref (zone);
         if (gloc)
-                mateweather_location_unref (gloc);
+                gweather_location_unref (gloc);
 }
 
 static void
@@ -2774,8 +2778,8 @@ edit_clear (ClockData *cd)
         GtkWidget *lon_combo = _clock_get_widget (cd, "edit-location-longitude-combo");
 
         /* clear out the old data */
-        mateweather_location_entry_set_location (cd->location_entry, NULL);
-        mateweather_timezone_menu_set_tzid (cd->zone_combo, NULL);
+        gweather_location_entry_set_location (GWEATHER_LOCATION_ENTRY(cd->location_entry), NULL);
+        gweather_timezone_menu_set_tzid (GWEATHER_TIMEZONE_MENU(cd->zone_combo), NULL);
 
         gtk_entry_set_text (GTK_ENTRY (lat_entry), "");
         gtk_entry_set_text (GTK_ENTRY (lon_entry), "");
@@ -2911,7 +2915,7 @@ edit_tree_row (GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpoint
 
         gtk_tree_model_get (model, iter, COL_CITY_LOC, &loc, -1);
 
-        mateweather_location_entry_set_city (cd->location_entry,
+        gweather_location_entry_set_city (GWEATHER_LOCATION_ENTRY(cd->location_entry),
                                           clock_location_get_city (loc),
                                           clock_location_get_weather_code (loc));
         name = clock_location_get_name (loc);
@@ -3010,18 +3014,18 @@ static void
 fill_prefs_window (ClockData *cd)
 {
         static const int temperatures[] = {
-                TEMP_UNIT_KELVIN,
-                TEMP_UNIT_CENTIGRADE,
-                TEMP_UNIT_FAHRENHEIT,
+                GWEATHER_TEMP_UNIT_KELVIN,
+                GWEATHER_TEMP_UNIT_CENTIGRADE,
+                GWEATHER_TEMP_UNIT_FAHRENHEIT,
                 -1
         };
 
         static const int speeds[] = {
-                SPEED_UNIT_MS,
-                SPEED_UNIT_KPH,
-                SPEED_UNIT_MPH,
-                SPEED_UNIT_KNOTS,
-                SPEED_UNIT_BFT,
+                GWEATHER_SPEED_UNIT_MS,
+                GWEATHER_SPEED_UNIT_KPH,
+                GWEATHER_SPEED_UNIT_MPH,
+                GWEATHER_SPEED_UNIT_KNOTS,
+                GWEATHER_SPEED_UNIT_BFT,
                 -1
         };
 
@@ -3143,7 +3147,7 @@ ensure_prefs_window_is_created (ClockData *cd)
         GtkWidget *location_name_label;
         GtkWidget *timezone_label;
         GtkTreeSelection *selection;
-        MateWeatherLocation *world;
+        GWeatherLocation *world;
 
         if (cd->prefs_window)
                 return;
@@ -3203,10 +3207,10 @@ ensure_prefs_window_is_created (ClockData *cd)
 
         edit_ok_button = _clock_get_widget (cd, "edit-location-ok-button");
 
-        world = mateweather_location_new_world (FALSE);
+        world = gweather_location_get_world ();
 
         location_box = _clock_get_widget (cd, "edit-location-name-box");
-        cd->location_entry = MATEWEATHER_LOCATION_ENTRY (mateweather_location_entry_new (world));
+        cd->location_entry = gweather_location_entry_new (world);
         gtk_widget_show (GTK_WIDGET (cd->location_entry));
         gtk_container_add (GTK_CONTAINER (location_box), GTK_WIDGET (cd->location_entry));
         gtk_label_set_mnemonic_widget (GTK_LABEL (location_name_label),
@@ -3218,22 +3222,22 @@ ensure_prefs_window_is_created (ClockData *cd)
                           G_CALLBACK (location_name_changed), cd);
 
         zone_box = _clock_get_widget (cd, "edit-location-timezone-box");
-        cd->zone_combo = MATEWEATHER_TIMEZONE_MENU (mateweather_timezone_menu_new (world));
+
+        cd->zone_combo = gweather_timezone_menu_new (world);
         gtk_widget_show (GTK_WIDGET (cd->zone_combo));
-        gtk_container_add (GTK_CONTAINER (zone_box), GTK_WIDGET (cd->zone_combo));
-        gtk_label_set_mnemonic_widget (GTK_LABEL (timezone_label),
-                                       GTK_WIDGET (cd->zone_combo));
+        gtk_container_add (GTK_CONTAINER (zone_box), cd->zone_combo);
+        gtk_label_set_mnemonic_widget (GTK_LABEL (timezone_label), cd->zone_combo);
 
         g_signal_connect (G_OBJECT (cd->zone_combo), "notify::tzid",
                           G_CALLBACK (location_timezone_changed), cd);
 
-        mateweather_location_unref (world);
+        gweather_location_unref (world);
 
         g_signal_connect (G_OBJECT (edit_cancel_button), "clicked",
                           G_CALLBACK (edit_hide), cd);
 
-        g_signal_connect (G_OBJECT (edit_ok_button), "clicked",
-                          G_CALLBACK (run_prefs_edit_save), cd);
+//        g_signal_connect (G_OBJECT (edit_ok_button), "clicked",
+//                          G_CALLBACK (run_prefs_edit_save), cd);
 
         /* Set up the time setting section */
 

@@ -31,6 +31,8 @@ CLOCK_SOURCES = 		\
 	clock-sunpos.h		\
 	clock-utils.c		\
 	clock-utils.h		\
+	mateweather-prefs.c \
+	mateweather-prefs.h \
 	set-timezone.c		\
 	set-timezone.h		\
 	$(BUILT_SOURCES)
@@ -42,7 +44,7 @@ CLOCK_CPPFLAGS =						\
 	-I$(srcdir)/../../libmate-panel-applet			\
 	-I$(top_builddir)/libmate-panel-applet			\
 	-DMATELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
-	-DMATEWEATHER_I_KNOW_THIS_IS_UNSTABLE
+	-DGWEATHER_I_KNOW_THIS_IS_UNSTABLE
 
 CLOCK_LDADD =						\
 	../../libmate-panel-applet/libmate-panel-applet-4.la	\
