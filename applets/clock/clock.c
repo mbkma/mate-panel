@@ -2577,7 +2577,8 @@ save_cities_store (ClockData *cd)
         g_list_free_full (locs, g_free);
 }
 
-#if 0
+#if 1
+//FIXME:
 static void
 run_prefs_edit_save (GtkButton *button, ClockData *cd)
 {
@@ -3236,8 +3237,8 @@ ensure_prefs_window_is_created (ClockData *cd)
         g_signal_connect (G_OBJECT (edit_cancel_button), "clicked",
                           G_CALLBACK (edit_hide), cd);
 
-//        g_signal_connect (G_OBJECT (edit_ok_button), "clicked",
-//                          G_CALLBACK (run_prefs_edit_save), cd);
+        g_signal_connect (G_OBJECT (edit_ok_button), "clicked",
+                          G_CALLBACK (run_prefs_edit_save), cd);
 
         /* Set up the time setting section */
 

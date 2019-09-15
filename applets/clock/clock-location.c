@@ -21,6 +21,7 @@
 #include "clock-marshallers.h"
 #include "set-timezone.h"
 #include "system-timezone.h"
+#include "mateweather-prefs.h"
 
 typedef struct {
         gchar *name;
@@ -676,54 +677,54 @@ update_weather_info (gpointer data)
 {
         ClockLocation *loc = (ClockLocation *) data;
         ClockLocationPrivate *priv = clock_location_get_instance_private (loc);
-        WeatherPrefs prefs = {
-                FORECAST_STATE,
-                FALSE,
-                NULL,
-                TEMP_UNIT_CENTIGRADE,
-                SPEED_UNIT_MS,
-                PRESSURE_UNIT_MB,
-                DISTANCE_UNIT_KM
-        };
+        //MateWeatherPrefs prefs = {
+        //        FORECAST_STATE,
+        //        FALSE,
+        //        NULL,
+        //        TEMP_UNIT_CENTIGRADE,
+        //        SPEED_UNIT_MS,
+        //        PRESSURE_UNIT_MB,
+        //        DISTANCE_UNIT_KM
+        //};
 
         // set temperature and speed units only if different from
         // invalid/default
-        if (priv->temperature_unit > TEMP_UNIT_DEFAULT)
-                prefs.temperature_unit = priv->temperature_unit;
-        if (priv->speed_unit > SPEED_UNIT_DEFAULT)
-                prefs.speed_unit = priv->speed_unit;
+        //if (priv->temperature_unit > TEMP_UNIT_DEFAULT)
+        //        prefs.temperature_unit = priv->temperature_unit;
+        //if (priv->speed_unit > SPEED_UNIT_DEFAULT)
+        //        prefs.speed_unit = priv->speed_unit;
 
         gweather_info_abort (priv->weather_info);
-        gweather_info_update (priv->weather_info,
-                             &prefs, weather_info_updated, loc);
+        gweather_info_update (priv->weather_info);
+                             //&prefs, weather_info_updated, loc);
 
         return TRUE;
 }
 
-static gchar *
-rad2dms (gfloat lat, gfloat lon)
-{
-        gchar h, h2;
-        gfloat d, deg, min, d2, deg2, min2;
-
-        h = lat > 0 ? 'N' : 'S';
-        d = fabs (lat);
-        deg = floor (d);
-        min = floor (60 * (d - deg));
-        h2 = lon > 0 ? 'E' : 'W';
-        d2 = fabs (lon);
-        deg2 = floor (d2);
-        min2 = floor (60 * (d2 - deg2));
-        return g_strdup_printf ("%02d-%02d%c %02d-%02d%c",
-                                (int)deg, (int)min, h,
-                                (int)deg2, (int)min2, h2);
-}
+//static gchar *
+//rad2dms (gfloat lat, gfloat lon)
+//{
+//        gchar h, h2;
+//        gfloat d, deg, min, d2, deg2, min2;
+//
+//        h = lat > 0 ? 'N' : 'S';
+//        d = fabs (lat);
+//        deg = floor (d);
+//        min = floor (60 * (d - deg));
+//        h2 = lon > 0 ? 'E' : 'W';
+//        d2 = fabs (lon);
+//        deg2 = floor (d2);
+//        min2 = floor (60 * (d2 - deg2));
+//        return g_strdup_printf ("%02d-%02d%c %02d-%02d%c",
+//                                (int)deg, (int)min, h,
+//                                (int)deg2, (int)min2, h2);
+//}
 
 static void
 setup_weather_updates (ClockLocation *loc)
 {
         ClockLocationPrivate *priv = clock_location_get_instance_private (loc);
-        GWeatherLocation *wl;
+        //GWeatherLocation *wl;
         //WeatherPrefs prefs = {
         //        FORECAST_STATE,
         //        FALSE,
