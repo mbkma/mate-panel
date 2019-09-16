@@ -2614,6 +2614,30 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
                 weather_code = gweather_location_get_code (gloc);
         }
 
+            GVariant *variant;
+            variant = gweather_location_serialize (gloc);
+            GString *str;
+            str = g_variant_print_string (variant, NULL, TRUE);
+            g_message ("variant: %s", str->str);
+            g_string_free (str, TRUE);
+                              double latitude;
+                              double longitude;
+
+            gweather_location_get_coords (gloc,
+                              &latitude,
+                              &longitude);
+
+            g_message("name:%s, lat:%.2f, lon:%.2f\n", gweather_location_get_name(gloc), latitude, longitude);
+//            const char *cname;
+//            const char *station_code;
+//            gboolean is_city, latlon_valid, parent_latlon_valid;
+//            gdouble latitude, longitude, parent_latitude, parent_longitude;
+//
+//            g_variant_get (variant, "(&s&sbm(dd)m(dd))", &cname, &station_code, &is_city,
+//                            &latlon_valid, &latitude, &longitude,
+//                            &parent_latlon_valid, &parent_latitude, &parent_longitude);
+//
+
         if (gweather_location_entry_has_custom_text (GWEATHER_LOCATION_ENTRY(cd->location_entry))) {
                 name = gtk_editable_get_chars (GTK_EDITABLE (cd->location_entry), 0, -1);
         }
@@ -2637,6 +2661,7 @@ run_prefs_edit_save (GtkButton *button, ClockData *cd)
                 clock_location_set_weather_code (loc, weather_code);
         } else {
             ;
+
                 //WeatherPrefs prefs;
 
                 //prefs.temperature_unit = cd->temperature_unit;
